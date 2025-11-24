@@ -2,3 +2,4 @@
 Flask
 yt-dlp
 flask-cors
+# Actualizado 24 Noviembre 2025
