@@ -37,7 +37,7 @@ def download_audio_api():
     url = None
     try:
         # 1. Obtener la URL del cuerpo JSON
-        data = request.get_json(silent=True)
+        data = request.get_json(silent=True) or {}
         url = data.get("url")
         
         if not url:
