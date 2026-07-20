@@ -1,5 +1,7 @@
 # requirements.txt
 Flask
-yt-dlp
+yt-dlp[default]
 flask-cors
-# Actualizado 24 Noviembre 2025
+# yt-dlp[default] incluye yt-dlp-ejs, necesario junto con Deno (ver Dockerfile)
+# para resolver el "n challenge" de YouTube.
+# Actualizado 20 Julio 2026
