@@ -3,6 +3,7 @@ import html
 import logging
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import urllib.error
@@ -21,6 +22,29 @@ BROWSER_USER_AGENT = (
     "(KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 )
 NAVARRA_WATCH_HOST = "grabaciones.parlamentodenavarra.es"
+
+_writable_cookies_path = None
+
+
+def _resolve_cookies_file() -> str | None:
+    """Copia el fichero de cookies a una ruta escribible en /tmp.
+
+    Los secretos montados en Cloud Run son de solo lectura, pero yt-dlp
+    reescribe el cookiejar al terminar cada descarga (para persistir la
+    sesión), asi que no puede usarse directamente sobre el punto de montaje.
+    """
+    global _writable_cookies_path
+    if _writable_cookies_path and os.path.exists(_writable_cookies_path):
+        return _writable_cookies_path
+
+    source_path = os.environ.get("COOKIES_FILE_PATH")
+    if not source_path or not os.path.exists(source_path):
+        return None
+
+    target_path = os.path.join(tempfile.gettempdir(), "_cookies_runtime.txt")
+    shutil.copyfile(source_path, target_path)
+    _writable_cookies_path = target_path
+    return _writable_cookies_path
 
 
 def _download_single_audio_source(url: str, output_dir: str = "/tmp") -> str:
@@ -56,6 +80,10 @@ def _download_single_audio_source(url: str, output_dir: str = "/tmp") -> str:
             "User-Agent": BROWSER_USER_AGENT,
         },
     }
+
+    cookies_file_path = _resolve_cookies_file()
+    if cookies_file_path:
+        ydl_opts["cookiefile"] = cookies_file_path
 
     logger.info(f"Descargando audio de la fuente resuelta: {url}")
 
